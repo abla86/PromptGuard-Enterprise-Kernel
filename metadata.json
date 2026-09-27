@@ -1,0 +1,6 @@
+{
+  "name": "PromptGuard Enterprise Kernel",
+  "description": "Deterministic AI Firewall and 5-Layer Taint Tracking Engine for LLM Security and Prompt Injection Defense",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
