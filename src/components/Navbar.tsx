@@ -10,12 +10,15 @@ import {
   Sliders,
   Sparkles,
   GitBranch,
+  FileCheck,
 } from 'lucide-react';
 
 interface NavbarProps {
   activeTab: 'inspector' | 'tests' | 'taint-graph' | 'fuzzer' | 'python-source';
   setActiveTab: (tab: 'inspector' | 'tests' | 'taint-graph' | 'fuzzer' | 'python-source') => void;
   onOpenConfig: () => void;
+  onOpenAuditModal: () => void;
+  auditEventsCount: number;
   totalTestsCount: number;
 }
 
@@ -23,6 +26,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   activeTab,
   setActiveTab,
   onOpenConfig,
+  onOpenAuditModal,
+  auditEventsCount,
   totalTestsCount,
 }) => {
   return (
@@ -131,6 +136,19 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse"></div>
               <span className="text-[11px] font-mono text-[#A1A1AA] uppercase">Kernel: Active</span>
             </div>
+
+            <button
+              id="btn-open-audit-modal"
+              onClick={onOpenAuditModal}
+              className="px-2.5 py-1.5 rounded border border-[#10B981]/50 bg-[#18181B] text-[#10B981] hover:bg-[#10B981]/15 hover:border-[#10B981] transition-all flex items-center space-x-1.5 text-xs font-mono font-bold shadow-xs"
+              title="Export Signed JSON Audit Report & Provenance Logs"
+            >
+              <FileCheck className="w-3.5 h-3.5 text-[#10B981]" />
+              <span className="hidden sm:inline">Signed Audit</span>
+              <span className="px-1.5 py-0.2 rounded text-[10px] bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/40 font-bold">
+                {auditEventsCount}
+              </span>
+            </button>
 
             <button
               id="btn-engine-config"

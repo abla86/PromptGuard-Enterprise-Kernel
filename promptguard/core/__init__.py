@@ -3,6 +3,7 @@ from .normalizer import AdvancedNormalizer
 from .rules import ThreatPatterns
 from .engine import PromptGuardEngine
 from .sandbox import ToolCallSandbox
+from .audit import AuditSessionLogger
 
 __all__ = [
     "TrustLevel",
@@ -14,5 +15,6 @@ __all__ = [
     "AdvancedNormalizer",
     "ThreatPatterns",
     "PromptGuardEngine",
-    "ToolCallSandbox"
+    "ToolCallSandbox",
+    "AuditSessionLogger"
 ]

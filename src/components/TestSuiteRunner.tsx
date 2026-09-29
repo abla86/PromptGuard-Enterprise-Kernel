@@ -13,16 +13,19 @@ import {
   ChevronUp,
   Terminal,
   Filter,
+  FileCheck,
 } from 'lucide-react';
 import { INITIAL_TEST_VECTORS } from '../data/testVectors';
 import { PromptGuardEngine } from '../engine/taintEngine';
+import { auditSession } from '../engine/auditSession';
 import { EnforcementAction, TestResult, TestVector } from '../types';
 
 interface TestSuiteRunnerProps {
   engine: PromptGuardEngine;
+  onOpenAuditModal?: () => void;
 }
 
-export const TestSuiteRunner: React.FC<TestSuiteRunnerProps> = ({ engine }) => {
+export const TestSuiteRunner: React.FC<TestSuiteRunnerProps> = ({ engine, onOpenAuditModal }) => {
   const [testVectors, setTestVectors] = useState<TestVector[]>(INITIAL_TEST_VECTORS);
   const [results, setResults] = useState<TestResult[]>([]);
   const [isRunning, setIsRunning] = useState<boolean>(false);
@@ -38,6 +41,9 @@ export const TestSuiteRunner: React.FC<TestSuiteRunnerProps> = ({ engine }) => {
       const t0 = performance.now();
       const taintContainer = engine.inspectAndContain(test.payload, test.trust, test.targetTool);
       const t1 = performance.now();
+
+      // Log into enterprise auditSession provenance log
+      auditSession.logInspection(taintContainer, 'test_suite', test.targetTool);
 
       const isBlocked = taintContainer.action === EnforcementAction.BLOCK;
       const passed = isBlocked === test.expect_block;
@@ -169,7 +175,18 @@ export const TestSuiteRunner: React.FC<TestSuiteRunnerProps> = ({ engine }) => {
             </p>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {onOpenAuditModal && (
+              <button
+                id="btn-test-suite-export-audit"
+                onClick={onOpenAuditModal}
+                className="px-2.5 py-1.5 rounded bg-[#09090B] hover:bg-[#27272A] text-[#10B981] border border-[#10B981]/50 text-xs font-mono font-bold flex items-center space-x-1.5 transition-colors shadow-xs"
+              >
+                <FileCheck className="w-3.5 h-3.5" />
+                <span>Export Signed Test Audit</span>
+              </button>
+            )}
+
             <div className="flex rounded border border-[#27272A] bg-[#09090B] p-0.5 text-xs font-mono">
               <button
                 onClick={() => setSelectedFilter('ALL')}

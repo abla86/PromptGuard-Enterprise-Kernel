@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ShieldAlert,
   ShieldCheck,
@@ -21,8 +21,10 @@ import {
   RotateCcw,
   CheckCircle2,
   XCircle,
+  FileCheck,
 } from 'lucide-react';
 import { AVAILABLE_TOOLS, PromptGuardEngine } from '../engine/taintEngine';
+import { auditSession } from '../engine/auditSession';
 import {
   EnforcementAction,
   SecurityViolation,
@@ -33,6 +35,10 @@ import {
 
 interface LiveFirewallInspectorProps {
   engine: PromptGuardEngine;
+  onOpenAuditModal?: () => void;
+  initialPayload?: string;
+  initialTrust?: TrustLevel;
+  initialToolId?: string;
 }
 
 const PRESET_PAYLOADS = [
@@ -101,15 +107,50 @@ const PRESET_PAYLOADS = [
   },
 ];
 
-export const LiveFirewallInspector: React.FC<LiveFirewallInspectorProps> = ({ engine }) => {
-  const [inputText, setInputText] = useState<string>(PRESET_PAYLOADS[1].text);
-  const [trustLevel, setTrustLevel] = useState<TrustLevel>(TrustLevel.UNTRUSTED_EXTERNAL);
-  const [selectedToolId, setSelectedToolId] = useState<string>('tool_search_db');
+export const LiveFirewallInspector: React.FC<LiveFirewallInspectorProps> = ({
+  engine,
+  onOpenAuditModal,
+  initialPayload,
+  initialTrust,
+  initialToolId,
+}) => {
+  const [inputText, setInputText] = useState<string>(
+    initialPayload !== undefined ? initialPayload : PRESET_PAYLOADS[1].text
+  );
+  const [trustLevel, setTrustLevel] = useState<TrustLevel>(
+    initialTrust !== undefined ? initialTrust : TrustLevel.UNTRUSTED_EXTERNAL
+  );
+  const [selectedToolId, setSelectedToolId] = useState<string>(
+    initialToolId || 'tool_search_db'
+  );
   const [activePipelineLayer, setActivePipelineLayer] = useState<number>(1);
   const [copiedEnvelope, setCopiedEnvelope] = useState<boolean>(false);
 
+  // Synchronize when external props change
+  useEffect(() => {
+    if (initialPayload !== undefined) {
+      setInputText(initialPayload);
+    }
+    if (initialTrust !== undefined) {
+      setTrustLevel(initialTrust);
+    }
+    if (initialToolId !== undefined) {
+      setSelectedToolId(initialToolId);
+    }
+  }, [initialPayload, initialTrust, initialToolId]);
+
   // Run engine inspection deterministically on current state
   const result: TaintContainer = engine.inspectAndContain(inputText, trustLevel, selectedToolId);
+
+  // Automatically record inspection in auditSession buffer
+  useEffect(() => {
+    if (inputText && inputText.trim().length > 0) {
+      const timer = setTimeout(() => {
+        auditSession.logInspection(result, 'live_inspector', selectedToolId);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [inputText, trustLevel, selectedToolId]);
 
   const handleCopyEnvelope = () => {
     navigator.clipboard.writeText(result.normalized_text);
@@ -121,6 +162,8 @@ export const LiveFirewallInspector: React.FC<LiveFirewallInspectorProps> = ({ en
     setInputText(preset.text);
     setTrustLevel(preset.trust);
     setSelectedToolId(preset.tool);
+    const immediateRes = engine.inspectAndContain(preset.text, preset.trust, preset.tool);
+    auditSession.logInspection(immediateRes, 'live_inspector', preset.tool);
   };
 
   // Helper for risk color
@@ -140,14 +183,27 @@ export const LiveFirewallInspector: React.FC<LiveFirewallInspectorProps> = ({ en
     <div className="space-y-6">
       {/* Top Presets Toolbar */}
       <div className="bg-[#18181B] border border-[#27272A] rounded-lg p-4 shadow-sm">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
           <span className="text-[11px] font-bold uppercase tracking-widest text-[#71717A] flex items-center space-x-1.5 font-mono">
             <Sparkles className="w-3.5 h-3.5 text-[#10B981]" />
             <span>Interactive Attack & Scenario Presets</span>
           </span>
-          <span className="text-[11px] text-[#71717A] hidden sm:inline font-mono">
-            Click any preset to test the 5-layer pipeline instantly
-          </span>
+
+          <div className="flex items-center space-x-2">
+            <span className="text-[11px] text-[#71717A] hidden lg:inline font-mono">
+              Click any preset to test 5-layer pipeline instantly
+            </span>
+            {onOpenAuditModal && (
+              <button
+                id="btn-inspector-export-audit"
+                onClick={onOpenAuditModal}
+                className="px-2.5 py-1 rounded bg-[#09090B] hover:bg-[#27272A] text-[#10B981] border border-[#10B981]/50 text-xs font-mono font-bold flex items-center space-x-1.5 transition-colors shadow-xs"
+              >
+                <FileCheck className="w-3.5 h-3.5" />
+                <span>Export Signed Audit</span>
+              </button>
+            )}
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
           {PRESET_PAYLOADS.map((preset, idx) => (
