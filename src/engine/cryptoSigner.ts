@@ -110,11 +110,13 @@ export async function importPublicKeyFromPem(pem: string): Promise<CryptoKey> {
     .replace(/-----BEGIN PUBLIC KEY-----/g, '')
     .replace(/-----END PUBLIC KEY-----/g, '')
     .replace(/\s+/g, '');
-  const keyBuffer = base64ToUint8Array(cleanedPem);
+  const decodedKey = base64ToUint8Array(cleanedPem);
+  const keyBuffer = new Uint8Array(new ArrayBuffer(decodedKey.byteLength));
+  keyBuffer.set(decodedKey);
 
   return await crypto.subtle.importKey(
     'spki',
-    keyBuffer.buffer,
+    keyBuffer,
     {
       name: 'ECDSA',
       namedCurve: 'P-256',
@@ -288,14 +290,16 @@ export async function verifyAuditReportJson(report: any): Promise<VerificationRe
     const publicKey = await importPublicKeyFromPem(signatureBlock.public_key_pem);
 
     // Verify ECDSA signature
-    const signatureBytes = base64ToUint8Array(signatureBlock.signature_base64);
+    const decodedSignature = base64ToUint8Array(signatureBlock.signature_base64);
+    const signatureBytes = new Uint8Array(new ArrayBuffer(decodedSignature.byteLength));
+    signatureBytes.set(decodedSignature);
     const isValidSignature = await crypto.subtle.verify(
       {
         name: 'ECDSA',
         hash: { name: 'SHA-256' },
       },
       publicKey,
-      signatureBytes.buffer,
+      signatureBytes,
       dataBuffer
     );
 
