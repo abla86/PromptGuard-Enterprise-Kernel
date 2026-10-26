@@ -56,3 +56,12 @@ The repository is published as a technical portfolio demonstration. Configuratio
 ## License
 
 Apache License 2.0. See [LICENSE](LICENSE).
+
+
+## Disclaimers and limitations
+
+- **Project status:** Features may be incomplete, experimental, or unverified. Confirm behavior against the current code, tests, and configuration before relying on it.
+- **No warranty:** Provided as-is, without guarantees of correctness, availability, security, or production readiness. Review and test changes before production use.
+- **Security and data:** Never commit credentials, API keys, personal information, or confidential data. Review permissions, external services, logging, retention, and dependency risks. Automated checks are not a complete security audit.
+- **Testing and deployment:** Passing tests or static checks does not prove all behavior is correct or deployment is safe. Verify functionality, access controls, dependencies, backups, monitoring, and operational requirements independently.
+- **Domain-specific limitation:** Prompt-injection detection and policy checks are defense-in-depth aids, not guarantees. Validate with representative adversarial tests, monitor false positives and false negatives, and never rely on a single detector as the only security boundary.
