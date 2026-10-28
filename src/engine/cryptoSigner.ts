@@ -117,6 +117,7 @@ export async function importPublicKeyFromPem(pem: string): Promise<CryptoKey> {
   return await crypto.subtle.importKey(
     'spki',
     keyBuffer,
+    keyBuffer.buffer as ArrayBuffer,
     {
       name: 'ECDSA',
       namedCurve: 'P-256',
@@ -300,6 +301,7 @@ export async function verifyAuditReportJson(report: any): Promise<VerificationRe
       },
       publicKey,
       signatureBytes,
+      signatureBytes.buffer as ArrayBuffer,
       dataBuffer
     );
 
